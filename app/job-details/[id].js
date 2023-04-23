@@ -1,4 +1,5 @@
-import React from "react";
+import { Stack, useRouter, useSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -7,8 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { Stack, useRouter, useSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
 
 import {
   Company,
@@ -18,8 +17,8 @@ import {
   ScreenHeaderBtn,
   Specifics,
 } from "../../components";
+import { COLORS, icons, SIZES } from "../../constants";
 import useFetch from "../../hook/useFetch";
-import { COLORS, SIZES, icons } from "../../constants";
 
 const tabs = ["About", "Qualifications", "Responsibilities"];
 
@@ -31,10 +30,15 @@ const JobDetails = () => {
     job_id: params.id,
   });
 
-  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(tabs[0]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = () => {};
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    refetch();
+    setRefreshing(false);
+  }, []);
+
   const displayTabContent = () => {
     switch (activeTab) {
       case "Qualifications":
@@ -51,12 +55,15 @@ const JobDetails = () => {
         );
 
       case "Responsibilities":
-        <Specifics
-          title="Responsibilities"
-          points={data[0].job_highlights?.Responsibilities ?? ["N/A"]}
-        />;
+        return (
+          <Specifics
+            title="Responsibilities"
+            points={data[0].job_highlights?.Responsibilities ?? ["N/A"]}
+          />
+        );
+
       default:
-        break;
+        return null;
     }
   };
 
@@ -80,6 +87,7 @@ const JobDetails = () => {
           headerTitle: "",
         }}
       />
+
       <>
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -92,7 +100,7 @@ const JobDetails = () => {
           ) : error ? (
             <Text>Something went wrong</Text>
           ) : data.length === 0 ? (
-            <Text>No data</Text>
+            <Text>No data available</Text>
           ) : (
             <View style={{ padding: SIZES.medium, paddingBottom: 100 }}>
               <Company
@@ -112,6 +120,13 @@ const JobDetails = () => {
             </View>
           )}
         </ScrollView>
+
+        <JobFooter
+          url={
+            data[0]?.job_google_link ??
+            "https://careers.google.com/jobs/results/"
+          }
+        />
       </>
     </SafeAreaView>
   );
